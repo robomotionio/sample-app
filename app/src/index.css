@@ -1,0 +1,465 @@
+/* Glacier Global's look, defined once. DESIGN.md says where each value
+   comes from. The kit paints with its --rm-* tokens, so redefining them here
+   restyles every kit component; the --g-* tokens are the brand palette for the
+   few surfaces the kit has no word for (the chocolate band, the scoops). */
+@import url("https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap");
+@import "@robomotion/app-kit/styles.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------ tokens */
+
+:root,
+.dark {
+  /* The brand palette (OKLCH: lightness chroma hue). */
+  --g-chocolate: 0.270 0.072 49.3;   /* #411900 */
+  --g-chocolate-deep: 0.213 0.053 54.8;
+  --g-navy: 0.355 0.079 244.6;       /* #0D3F62 */
+  --g-ocean: 0.505 0.098 243.1;      /* #296A98 */
+  --g-cream: 0.976 0.044 97.2;       /* #FFF8D7 */
+  --g-ivory: 0.993 0.011 95.2;       /* #FFFDF5 */
+  --g-biscuit: 0.882 0.031 69.0;     /* #E6D5C3, eyebrows on chocolate */
+  --g-pistachio: 0.769 0.124 133.9;  /* #93C572 */
+  --g-strawberry: 0.623 0.250 22.9;  /* #FA0536 */
+  --g-lemon: 0.972 0.172 109.2;      /* #FFFF65 */
+  --g-ice: 0.801 0.054 202.1;        /* #95C9CD */
+  --g-lavender: 0.809 0.055 286.3;   /* #BDBCE3 */
+
+  /* The kit's tokens, in the brand's colours. The demo is shown in the
+     brand's light look only, so dark mode carries the same values. */
+  --rm-background: var(--g-ivory);
+  --rm-foreground: var(--g-chocolate);
+  --rm-card: 1 0 0;
+  --rm-card-foreground: var(--g-chocolate);
+  --rm-popover: 1 0 0;
+  --rm-popover-foreground: var(--g-chocolate);
+  --rm-primary: var(--g-navy);
+  --rm-primary-foreground: 1 0 0;
+  --rm-secondary: var(--g-cream);
+  --rm-secondary-foreground: var(--g-chocolate);
+  --rm-muted: 0.955 0.027 90.9;            /* #F7F0DC */
+  --rm-muted-foreground: 0.486 0.058 52.3; /* #7A5640, milk chocolate */
+  --rm-border: 0.923 0.035 88.8;           /* #EFE5CC */
+  --rm-input: 0.882 0.031 69.0;
+  --rm-ring: var(--g-navy);
+  --rm-success: 0.573 0.142 135.8;         /* pistachio, deep enough for text */
+  --rm-success-foreground: 1 0 0;
+  --rm-warning: 0.626 0.125 70.4;          /* caramel */
+  --rm-warning-foreground: 1 0 0;
+  --rm-destructive: var(--g-strawberry);
+  --rm-destructive-foreground: 1 0 0;
+  --rm-info: var(--g-ocean);
+  --rm-info-foreground: 1 0 0;
+  --rm-chart-1: var(--g-navy);
+  --rm-chart-2: var(--g-pistachio);
+  --rm-chart-3: var(--g-strawberry);
+  --rm-chart-4: var(--g-ice);
+  --rm-chart-5: var(--g-lavender);
+  --rm-sidebar: var(--g-cream);
+  --rm-sidebar-foreground: var(--g-chocolate);
+  --rm-sidebar-accent: 0.940 0.033 91.7;
+  --rm-sidebar-border: 0.923 0.035 88.8;
+  --rm-radius: 0.75rem;
+  --rm-shadow-sm: 0 1px 2px oklch(0.27 0.072 49.3 / 0.06);
+  --rm-shadow-md: 0 10px 30px -12px oklch(0.27 0.072 49.3 / 0.18);
+  --rm-shadow-lg: 0 24px 60px -20px oklch(0.27 0.072 49.3 / 0.25);
+  --rm-font-sans: "Lato", ui-sans-serif, "Segoe UI", sans-serif;
+
+  --g-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  color-scheme: light;
+}
+
+body {
+  font-family: var(--rm-font-sans);
+  background: oklch(var(--g-ivory));
+  color: oklch(var(--g-chocolate));
+}
+
+/* ------------------------------------------------------------ type */
+
+/* Small capitals above a heading, as on the site ("ABOUT US"). */
+.g-eyebrow {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: oklch(var(--rm-muted-foreground));
+}
+
+.g-eyebrow-xs {
+  font-size: 0.6rem;
+}
+
+/* Screen titles are light and large, like the site's headlines. */
+[data-rm-screen] h1 {
+  font-weight: 300;
+  font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.75rem);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+/* Card titles carry the weight instead. */
+[data-rm-screen] h2,
+[data-rm-screen] h3 {
+  font-weight: 900;
+}
+
+/* Field labels and table headers read like the site's eyebrows. */
+[data-rm-screen] dt {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+[data-rm-screen] th *,
+[data-rm-screen] th {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------ buttons */
+
+/* Every kit button is a pill. */
+button.whitespace-nowrap.font-medium.gap-2,
+button.g-go {
+  border-radius: 999px;
+  font-weight: 700;
+  transition: background-color 0.2s var(--g-ease), filter 0.2s var(--g-ease), box-shadow 0.2s var(--g-ease);
+}
+
+/* The site's signature: a navy pill that ends in a pistachio circle with an
+   arrow, which nudges right on hover. Add className="g-go" and
+   iconRight="arrow-right" to a primary button. */
+button.g-go {
+  height: 3rem;
+  padding: 0 0.3rem 0 1.5rem;
+  gap: 0.9rem;
+  font-size: 0.95rem;
+}
+button.g-go > svg:last-child {
+  box-sizing: content-box;
+  width: 1rem;
+  height: 1rem;
+  padding: 0.7rem;
+  border-radius: 999px;
+  background: oklch(var(--g-pistachio));
+  color: oklch(1 0 0);
+  transition: transform 0.25s var(--g-ease);
+}
+button.g-go:hover > svg:last-child {
+  transform: translateX(3px);
+}
+button.g-go.g-go-light {
+  background: oklch(var(--g-cream));
+  color: oklch(var(--g-chocolate));
+}
+
+/* ------------------------------------------------------------ the shell */
+
+/* The top bar: a cream strip with the navigation as pills. */
+[data-rm-shell] header.sticky {
+  background: oklch(var(--g-cream) / 0.92);
+  border-bottom: 1px solid oklch(var(--rm-border));
+}
+nav[aria-label="Main"] button {
+  border-radius: 999px;
+  font-weight: 700;
+  color: oklch(var(--g-chocolate));
+  transition: background-color 0.2s var(--g-ease), color 0.2s var(--g-ease);
+}
+nav[aria-label="Main"] button:hover {
+  background: oklch(var(--g-chocolate) / 0.06);
+}
+nav[aria-label="Main"] button[aria-current="page"] {
+  background: oklch(var(--g-navy));
+  color: oklch(1 0 0);
+}
+nav[aria-label="Main"] button > span,
+nav[aria-label="Main"] button svg {
+  color: inherit;
+}
+
+/* Cards: larger radius, a hairline instead of a shadow. */
+[data-rm-screen] .rounded-lg.border {
+  border-radius: 1rem;
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------ the band */
+
+/* The chocolate band with big cream numbers, as on the site's stats. */
+.g-band {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  background: oklch(var(--g-chocolate));
+  color: oklch(var(--g-cream));
+}
+.g-band .g-eyebrow {
+  color: oklch(var(--g-biscuit));
+}
+.g-band-muted {
+  color: oklch(var(--g-biscuit));
+}
+.g-number {
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.g-number-hero {
+  font-size: clamp(5rem, 3rem + 7vw, 9rem);
+}
+.g-number-small {
+  font-size: clamp(2.25rem, 1.75rem + 1.5vw, 3.25rem);
+}
+
+/* A stat with the site's thin strawberry outline. */
+.g-stat {
+  border: 1px solid oklch(var(--g-strawberry));
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.25rem 1rem;
+  transition: background-color 0.25s var(--g-ease), transform 0.25s var(--g-ease);
+}
+button.g-stat {
+  text-align: left;
+  width: 100%;
+}
+button.g-stat:hover {
+  background: oklch(var(--g-cream) / 0.08);
+  transform: translateY(-2px);
+}
+
+/* ------------------------------------------------------------ the queue */
+
+.g-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1.25rem;
+  width: 100%;
+  padding: 1.1rem 0.75rem 1.1rem 0.25rem;
+  text-align: left;
+  border-bottom: 1px solid oklch(var(--rm-border));
+  transition: background-color 0.2s var(--g-ease), padding 0.2s var(--g-ease);
+}
+.g-row:hover {
+  background: oklch(var(--g-cream) / 0.7);
+  padding-left: 0.75rem;
+}
+.g-row .g-row-go {
+  color: oklch(var(--rm-muted-foreground));
+  transition: transform 0.2s var(--g-ease), color 0.2s var(--g-ease);
+}
+.g-row:hover .g-row-go {
+  transform: translateX(4px);
+  color: oklch(var(--g-navy));
+}
+
+/* The pipeline as one flavoured stripe. */
+.g-stripe {
+  display: flex;
+  height: 0.75rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: oklch(var(--rm-muted));
+}
+.g-stripe > span {
+  transition: flex-grow 0.6s var(--g-ease);
+}
+.g-swatch {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 999px;
+}
+
+/* ------------------------------------------------------------ the scoops */
+
+/* The three sign-offs as three scoops on a cone, stacked as a pyramid: CPO
+   and CFO side by side, CEO on top. Each scoop's flavour is its decision, and
+   a thin ivory line keeps two scoops of the same flavour apart. */
+.g-cone {
+  --s: 17px;
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  grid-template-areas: "top top" "left right" "cone cone";
+  justify-items: center;
+  align-items: end;
+  vertical-align: middle;
+}
+.g-cone::after {
+  content: "";
+  grid-area: cone;
+  width: 0;
+  height: 0;
+  margin-top: calc(var(--s) * -0.18);
+  border-left: calc(var(--s) * 0.78) solid transparent;
+  border-right: calc(var(--s) * 0.78) solid transparent;
+  border-top: calc(var(--s) * 1.15) solid oklch(0.78 0.08 70);
+}
+.g-scoop {
+  position: relative;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 1.5px oklch(var(--g-ivory)),
+    inset 0 calc(var(--s) * -0.14) 0 oklch(0 0 0 / 0.1);
+  transition: transform 0.2s var(--g-ease);
+}
+.g-scoop-ceo {
+  grid-area: top;
+  z-index: 2;
+  margin-bottom: calc(var(--s) * -0.32);
+}
+.g-scoop-cpo {
+  grid-area: left;
+  margin-right: calc(var(--s) * -0.14);
+}
+.g-scoop-cfo {
+  grid-area: right;
+  margin-left: calc(var(--s) * -0.14);
+  z-index: 1;
+}
+.g-cone:hover .g-scoop-ceo {
+  transform: translateY(-1px);
+}
+.g-cone-lg {
+  --s: 30px;
+}
+.g-cone-lg .g-scoop {
+  box-shadow:
+    0 0 0 2.5px oklch(1 0 0),
+    inset 0 calc(var(--s) * -0.14) 0 oklch(0 0 0 / 0.1);
+}
+
+.g-flavour-pending { background: oklch(var(--g-cream)); }
+.g-scoop.g-flavour-pending {
+  background:
+    radial-gradient(circle at 50% 50%, oklch(var(--g-cream)) 60%, oklch(var(--g-biscuit)) 100%);
+}
+.g-flavour-approved { background: oklch(var(--g-pistachio)); }
+.g-flavour-rejected { background: oklch(var(--g-strawberry)); }
+.g-flavour-info { background: oklch(0.93 0.17 105); }
+.g-swatch.g-flavour-pending { box-shadow: inset 0 0 0 1.5px oklch(var(--g-biscuit)); }
+
+/* A date field that opens a calendar: drawn like the kit's inputs. */
+.g-date {
+  display: flex;
+  align-items: center;
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid oklch(var(--rm-input));
+  border-radius: calc(var(--rm-radius) - 0.125rem);
+  background: oklch(var(--rm-card));
+  font-size: 0.875rem;
+  color: oklch(var(--rm-muted-foreground));
+  text-align: left;
+  transition: border-color 0.2s var(--g-ease), box-shadow 0.2s var(--g-ease);
+}
+.g-date:hover {
+  border-color: oklch(var(--g-navy) / 0.5);
+}
+.g-date:focus-visible,
+.g-date[aria-expanded="true"] {
+  outline: none;
+  border-color: oklch(var(--g-navy));
+  box-shadow: 0 0 0 3px oklch(var(--g-navy) / 0.15);
+}
+
+.g-fill-draft { background: oklch(var(--g-biscuit)); }
+.g-fill-hr { background: oklch(var(--g-ice)); }
+.g-fill-exec { background: oklch(var(--g-navy)); }
+.g-fill-info { background: oklch(var(--g-lemon)); }
+.g-fill-approved { background: oklch(var(--g-pistachio)); }
+.g-fill-rejected { background: oklch(var(--g-strawberry)); }
+.g-fill-closed { background: oklch(var(--g-lavender)); }
+
+/* ------------------------------------------------------------ sign in */
+
+.g-door {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr;
+  background: oklch(var(--g-ivory));
+}
+@media (min-width: 960px) {
+  .g-door {
+    grid-template-columns: 1.15fr 1fr;
+  }
+}
+.g-door-art {
+  position: relative;
+  overflow: hidden;
+  background: oklch(var(--g-chocolate));
+  color: oklch(var(--g-cream));
+  padding: 3rem clamp(1.5rem, 5vw, 4.5rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 3rem;
+}
+.g-door-art h1 {
+  font-weight: 300;
+  font-size: clamp(2.5rem, 1.5rem + 3.5vw, 4.75rem);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+}
+.g-door-art .g-eyebrow {
+  color: oklch(var(--g-biscuit));
+}
+.g-door-scoops {
+  position: absolute;
+  right: -3rem;
+  bottom: -3rem;
+  width: 22rem;
+  height: 22rem;
+  pointer-events: none;
+}
+.g-door-scoops span {
+  position: absolute;
+  border-radius: 999px;
+}
+.g-door-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+  }
+}
+
+/* The kit's calendar is an event calendar; inside a date field it becomes a
+   compact picker: short cells, the day centred, the chosen day a navy dot. */
+.g-mini-cal .grid-cols-7 > * {
+  background: transparent;
+  min-height: 0;
+  height: 2.4rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-weight: 700;
+  border: 0;
+  border-radius: 999px;
+}
+.g-mini-cal .grid-cols-7 > button:hover {
+  background: oklch(var(--g-cream));
+}
+.g-mini-cal .grid-cols-7 > button[aria-pressed="true"],
+.g-mini-cal .grid-cols-7 > button[aria-selected="true"] {
+  background: oklch(var(--g-navy));
+  color: oklch(1 0 0);
+}
+.g-mini-cal [role="group"] {
+  border: 0;
+}

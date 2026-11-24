@@ -1,0 +1,219 @@
+{
+  "schema": "robomotion.app/v1",
+  "app_id": "00000000-0000-0000-0000-000000000000",
+  "flow_id": "00000000-0000-0000-0000-000000000000",
+  "name": "Requests",
+  "description": "Send new requests to the robot and follow what happens to each one.",
+  "auth": "workspace",
+  "theme": {
+    "accent": "#FF4F00"
+  },
+  "types": {
+    "RequestLine": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "One thing that is being asked for."
+        },
+        "quantity": {
+          "type": "integer",
+          "description": "How many of it."
+        }
+      },
+      "required": [
+        "description"
+      ]
+    },
+    "WorkRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "report",
+            "data_update",
+            "access",
+            "other"
+          ]
+        },
+        "details": {
+          "type": "string"
+        },
+        "needed_by": {
+          "type": "string",
+          "format": "date"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "received",
+            "in_progress",
+            "done",
+            "failed"
+          ]
+        },
+        "submitted_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "outcome": {
+          "type": "string",
+          "description": "A plain sentence about how the request ended."
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/types/RequestLine"
+          },
+          "description": "The specific things being asked for, one per line."
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Short words to file it under."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "category",
+        "status",
+        "submitted_at"
+      ]
+    }
+  },
+  "actions": {
+    "submitRequest": {
+      "description": "Send in a new request for the robot to work on.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "report",
+              "data_update",
+              "access",
+              "other"
+            ]
+          },
+          "details": {
+            "type": "string"
+          },
+          "needed_by": {
+            "type": "string",
+            "format": "date"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/RequestLine"
+            },
+            "description": "The specific things being asked for, one per line."
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Short words to file it under."
+          }
+        },
+        "required": [
+          "title",
+          "category"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/WorkRequest"
+      },
+      "timeout_ms": 30000
+    },
+    "listRequests": {
+      "description": "Look up the requests that have been sent in, a page at a time.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "filter": {
+            "type": "string",
+            "description": "Free text from the table's filter box."
+          },
+          "sort": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "dir": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ]
+              }
+            }
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Rows to skip."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Rows to return."
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/WorkRequest"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "description": "Rows there are altogether, across every page."
+          }
+        },
+        "required": [
+          "rows",
+          "total"
+        ]
+      },
+      "timeout_ms": 30000
+    }
+  },
+  "events": {
+    "requestUpdated": {
+      "description": "A request moved to a new status.",
+      "payload": {
+        "$ref": "#/types/WorkRequest"
+      },
+      "audience": "broadcast"
+    }
+  },
+  "screens": {
+    "submit": {
+      "description": "Fill in the form to send a new request.",
+      "route": "/"
+    },
+    "requests": {
+      "description": "See every request and where it stands.",
+      "route": "/requests"
+    }
+  }
+}

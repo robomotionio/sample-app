@@ -1,0 +1,1060 @@
+{
+  "schema": "robomotion.app/v1",
+  "app_id": "d2dbc145-7845-45f5-b972-c80757530fb7",
+  "flow_id": "4aa0e451-0a2b-415e-b093-f3f4c13c6a1f",
+  "name": "Vacancy Approvals",
+  "description": "Request a vacancy, validate it with the People team and get it signed off by the CEO, CPO and CFO.",
+  "auth": "workspace",
+  "theme": {
+    "accent": "#0D3F62",
+    "layout": "topbar"
+  },
+  "types": {
+    "Role": {
+      "type": "string",
+      "description": "Who is using the app.",
+      "enum": [
+        "hiring_manager",
+        "people_partner",
+        "ceo",
+        "cpo",
+        "cfo",
+        "talent_partner",
+        "admin"
+      ]
+    },
+    "Status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "pending_hr",
+        "pending_approval",
+        "info_requested",
+        "approved",
+        "rejected",
+        "closed"
+      ]
+    },
+    "Form1": {
+      "type": "object",
+      "description": "The vacancy request filled in by the hiring manager.",
+      "properties": {
+        "hiring_manager": {
+          "type": "string"
+        },
+        "department": {
+          "type": "string"
+        },
+        "request_date": {
+          "type": "string",
+          "description": "yyyy-mm-dd"
+        },
+        "job_title": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "role_type": {
+          "type": "string"
+        },
+        "business_justification": {
+          "type": "string"
+        },
+        "desired_start_date": {
+          "type": "string",
+          "description": "yyyy-mm-dd"
+        },
+        "reporting_manager": {
+          "type": "string"
+        }
+      }
+    },
+    "Form2": {
+      "type": "object",
+      "description": "The validation filled in by the People Business Partner.",
+      "properties": {
+        "salary_range": {
+          "type": "string"
+        },
+        "benefit_package": {
+          "type": "string"
+        },
+        "job_family": {
+          "type": "string"
+        },
+        "advertised": {
+          "type": "string"
+        },
+        "recruitment_methods": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "budget_confirmed": {
+          "type": "boolean"
+        },
+        "hr_recommendation": {
+          "type": "string"
+        },
+        "hr_comments": {
+          "type": "string"
+        }
+      }
+    },
+    "Approval": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string"
+        },
+        "decision": {
+          "type": "string",
+          "description": "pending, approved, rejected or info"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "at": {
+          "type": "number"
+        },
+        "reminders": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "role",
+        "decision"
+      ]
+    },
+    "InfoRequest": {
+      "type": "object",
+      "properties": {
+        "from_role": {
+          "type": "string"
+        },
+        "from_name": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string",
+          "description": "hiring_manager or people_partner"
+        },
+        "question": {
+          "type": "string"
+        },
+        "asked_at": {
+          "type": "number"
+        }
+      }
+    },
+    "HistoryEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "at": {
+          "type": "number"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "actor_role": {
+          "type": "string"
+        },
+        "actor_name": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "tone": {
+          "type": "string",
+          "description": "ok, warn, error or pending"
+        }
+      },
+      "required": [
+        "id",
+        "at",
+        "title"
+      ]
+    },
+    "RequestSummary": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/types/Status"
+        },
+        "job_title": {
+          "type": "string"
+        },
+        "department": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "role_type": {
+          "type": "string"
+        },
+        "hiring_manager": {
+          "type": "string"
+        },
+        "pbp": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "number"
+        },
+        "updated_at": {
+          "type": "number"
+        },
+        "stage_since": {
+          "type": "number",
+          "description": "When the request reached its current stage."
+        },
+        "approvals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/types/Approval"
+          }
+        },
+        "info_target": {
+          "type": "string"
+        },
+        "my_decision": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "ref",
+        "status",
+        "job_title"
+      ]
+    },
+    "RequestDetail": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/types/Status"
+        },
+        "hiring_manager": {
+          "type": "string"
+        },
+        "pbp": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "number"
+        },
+        "updated_at": {
+          "type": "number"
+        },
+        "stage_since": {
+          "type": "number"
+        },
+        "form1": {
+          "$ref": "#/types/Form1"
+        },
+        "form2": {
+          "$ref": "#/types/Form2"
+        },
+        "approvals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/types/Approval"
+          }
+        },
+        "info": {
+          "$ref": "#/types/InfoRequest"
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "$ref": "#/types/HistoryEntry"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "ref",
+        "status",
+        "form1",
+        "approvals",
+        "history"
+      ]
+    },
+    "Changed": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/types/Status"
+        }
+      },
+      "required": [
+        "id",
+        "status"
+      ]
+    },
+    "User": {
+      "type": "object",
+      "description": "Who is signed in.",
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/types/Role"
+        }
+      },
+      "required": [
+        "token",
+        "username",
+        "name",
+        "role"
+      ]
+    }
+  },
+  "actions": {
+    "getOverview": {
+      "description": "See what is waiting for you and how the vacancy pipeline looks today.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "counts": {
+            "type": "object",
+            "properties": {
+              "draft": {
+                "type": "integer"
+              },
+              "pending_hr": {
+                "type": "integer"
+              },
+              "pending_approval": {
+                "type": "integer"
+              },
+              "info_requested": {
+                "type": "integer"
+              },
+              "approved": {
+                "type": "integer"
+              },
+              "rejected": {
+                "type": "integer"
+              },
+              "closed": {
+                "type": "integer"
+              },
+              "total": {
+                "type": "integer"
+              }
+            }
+          },
+          "needs_me": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/RequestSummary"
+            }
+          },
+          "recent": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/HistoryEntry"
+            }
+          },
+          "unread": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "counts",
+          "needs_me",
+          "recent",
+          "unread"
+        ]
+      }
+    },
+    "loadSampleData": {
+      "description": "Fill an empty app with a handful of example vacancy requests (administrator only).",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "added": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "added"
+        ]
+      },
+      "concurrency": {
+        "mode": "queue",
+        "limit": 1
+      }
+    },
+    "listRequests": {
+      "description": "List the vacancy requests you are allowed to see, for one view: mine, to validate, awaiting me, decided, ready to recruit or all.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "mine",
+              "to_validate",
+              "validated",
+              "awaiting_me",
+              "decided_by_me",
+              "to_recruit",
+              "recruited",
+              "all"
+            ]
+          }
+        },
+        "required": [
+          "token",
+          "scope"
+        ]
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/RequestSummary"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rows",
+          "total"
+        ]
+      }
+    },
+    "getRequest": {
+      "description": "Open one vacancy request with both forms, the approvals and its full history.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "id"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/RequestDetail"
+      }
+    },
+    "saveRequest": {
+      "description": "Save a vacancy request as a draft or send it to the People Business Partner.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          },
+          "id": {
+            "type": "string",
+            "description": "Leave empty for a new request."
+          },
+          "department": {
+            "type": "string"
+          },
+          "request_date": {
+            "type": "string"
+          },
+          "job_title": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "role_type": {
+            "type": "string"
+          },
+          "business_justification": {
+            "type": "string"
+          },
+          "desired_start_date": {
+            "type": "string"
+          },
+          "reporting_manager": {
+            "type": "string"
+          },
+          "submit": {
+            "type": "boolean",
+            "description": "True sends it on, false keeps it as a draft."
+          }
+        },
+        "required": [
+          "token",
+          "job_title"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/Changed"
+      },
+      "concurrency": {
+        "mode": "queue",
+        "limit": 1
+      }
+    },
+    "deleteDraft": {
+      "description": "Throw away a draft request that was never sent.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "id"
+        ]
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "removed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "removed"
+        ]
+      },
+      "concurrency": {
+        "mode": "queue",
+        "limit": 1
+      }
+    },
+    "validateRequest": {
+      "description": "Complete the People Business Partner validation and send the request for executive approval, or send it back to the hiring manager.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          },
+          "id": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "submit",
+              "return"
+            ]
+          },
+          "salary_range": {
+            "type": "string"
+          },
+          "benefit_package": {
+            "type": "string"
+          },
+          "job_family": {
+            "type": "string"
+          },
+          "advertised": {
+            "type": "string"
+          },
+          "recruitment_methods": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "budget_confirmed": {
+            "type": "boolean"
+          },
+          "hr_recommendation": {
+            "type": "string"
+          },
+          "hr_comments": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string",
+            "description": "What the hiring manager should add, when sending it back."
+          }
+        },
+        "required": [
+          "token",
+          "id",
+          "outcome"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/Changed"
+      },
+      "concurrency": {
+        "mode": "queue",
+        "limit": 1
+      }
+    },
+    "decideRequest": {
+      "description": "Approve, reject or ask for more information on a vacancy request as CEO, CPO or CFO.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          },
+          "id": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "reject",
+              "info"
+            ]
+          },
+          "comment": {
+            "type": "string"
+          },
+          "info_target": {
+            "type": "string",
+            "enum": [
+              "hiring_manager",
+              "people_partner"
+            ]
+          }
+        },
+        "required": [
+          "token",
+          "id",
+          "decision"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/Changed"
+      },
+      "concurrency": {
+        "mode": "queue",
+        "limit": 1
+      }
+    },
+    "answerInfo": {
+      "description": "Answer a question someone asked about a vacancy request so it can move on.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          },
+          "id": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "id",
+          "answer"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/Changed"
+      },
+      "concurrency": {
+        "mode": "queue",
+        "limit": 1
+      }
+    },
+    "closeRequest": {
+      "description": "Mark an approved vacancy as handed over to recruitment in Deel ATS.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          },
+          "id": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "id"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/Changed"
+      },
+      "concurrency": {
+        "mode": "queue",
+        "limit": 1
+      }
+    },
+    "listNotifications": {
+      "description": "See the notifications sent to you.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "number"
+                },
+                "request_id": {
+                  "type": "string"
+                },
+                "ref": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                },
+                "tone": {
+                  "type": "string"
+                },
+                "read": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "at",
+                "title",
+                "read"
+              ]
+            }
+          },
+          "unread": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rows",
+          "unread"
+        ]
+      }
+    },
+    "markNotificationsRead": {
+      "description": "Mark all of your notifications as read.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "marked": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "marked"
+        ]
+      }
+    },
+    "sendReminders": {
+      "description": "Remind every executive who has left a request waiting for a week or more (People team and administrator).",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "sent": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sent"
+        ]
+      },
+      "concurrency": {
+        "mode": "queue",
+        "limit": 1
+      }
+    },
+    "clearAllRequests": {
+      "description": "Remove every request and notification so the app starts empty again (administrator only).",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          },
+          "confirm": {
+            "type": "boolean",
+            "description": "Must be true."
+          }
+        },
+        "required": [
+          "token",
+          "confirm"
+        ]
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "removed": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "removed"
+        ]
+      },
+      "concurrency": {
+        "mode": "queue",
+        "limit": 1
+      }
+    },
+    "signIn": {
+      "description": "Sign in with your work email (name@glacierglobal.com) and password.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/User"
+      },
+      "concurrency": {
+        "mode": "queue",
+        "limit": 1
+      }
+    },
+    "whoAmI": {
+      "description": "Check who is signed in on this browser.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/User"
+      }
+    },
+    "signOut": {
+      "description": "Sign out of this browser.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The signed-in session."
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      }
+    }
+  },
+  "events": {
+    "requestChanged": {
+      "description": "A vacancy request moved on, so open screens show the latest.",
+      "payload": {
+        "$ref": "#/types/Changed"
+      },
+      "audience": "broadcast"
+    }
+  },
+  "screens": {
+    "signIn": {
+      "description": "Sign in with your account.",
+      "route": "/signin"
+    },
+    "home": {
+      "description": "Choose who you are and see what is waiting for you.",
+      "route": "/"
+    },
+    "newRequest": {
+      "description": "Fill in a vacancy request.",
+      "route": "/new"
+    },
+    "myRequests": {
+      "description": "Follow the vacancy requests you raised.",
+      "route": "/my"
+    },
+    "validation": {
+      "description": "Validate the requests waiting for the People team.",
+      "route": "/validate"
+    },
+    "approvals": {
+      "description": "Decide on the requests waiting for your approval.",
+      "route": "/approvals"
+    },
+    "recruitment": {
+      "description": "Start recruiting for approved vacancies.",
+      "route": "/recruit"
+    },
+    "requests": {
+      "description": "Every vacancy request you are allowed to see and where it stands.",
+      "route": "/requests"
+    },
+    "request": {
+      "description": "One vacancy request, its forms, approvals and history.",
+      "route": "/request"
+    },
+    "inbox": {
+      "description": "The notifications sent to you.",
+      "route": "/inbox"
+    }
+  }
+}

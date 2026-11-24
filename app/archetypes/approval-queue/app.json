@@ -1,0 +1,211 @@
+{
+  "schema": "robomotion.app/v1",
+  "app_id": "00000000-0000-0000-0000-000000000000",
+  "flow_id": "00000000-0000-0000-0000-000000000000",
+  "name": "Approval Queue",
+  "description": "Review items the robot has lined up and approve or reject each one.",
+  "auth": "workspace",
+  "theme": {
+    "accent": "#FF4F00"
+  },
+  "types": {
+    "QueueItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "currency": {
+          "type": "string",
+          "description": "ISO 4217 code, for example USD."
+        },
+        "summary": {
+          "type": "string",
+          "description": "One or two plain sentences about the item."
+        },
+        "submitted_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "approved",
+            "rejected"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "requester",
+        "submitted_at",
+        "status"
+      ]
+    }
+  },
+  "actions": {
+    "approveItem": {
+      "description": "Approve one pending item.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/QueueItem"
+      },
+      "timeout_ms": 30000
+    },
+    "rejectItem": {
+      "description": "Reject one pending item with a short reason.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reason"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/QueueItem"
+      },
+      "timeout_ms": 30000
+    },
+    "listQueue": {
+      "description": "Look up the items still waiting for a decision, a page at a time.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "filter": {
+            "type": "string",
+            "description": "Free text from the table's filter box."
+          },
+          "sort": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "dir": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ]
+              }
+            }
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Rows to skip."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Rows to return."
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/QueueItem"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "description": "Rows there are altogether, across every page."
+          }
+        },
+        "required": [
+          "rows",
+          "total"
+        ]
+      },
+      "timeout_ms": 30000
+    },
+    "approveMany": {
+      "description": "Approve everything that was ticked, or everything a filter matches.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The items that were ticked. Absent when all_matching is true."
+          },
+          "all_matching": {
+            "type": "boolean",
+            "description": "Approve every item the filter matches, however many that is."
+          },
+          "filter": {
+            "type": "string",
+            "description": "The filter the selection was made under."
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "approved": {
+            "type": "integer",
+            "description": "How many items were approved."
+          }
+        },
+        "required": [
+          "approved"
+        ]
+      },
+      "timeout_ms": 120000
+    }
+  },
+  "events": {
+    "itemDecided": {
+      "description": "An item was approved or rejected.",
+      "payload": {
+        "$ref": "#/types/QueueItem"
+      },
+      "audience": "broadcast"
+    }
+  },
+  "screens": {
+    "queue": {
+      "description": "Work through the items waiting for a decision.",
+      "route": "/"
+    }
+  }
+}

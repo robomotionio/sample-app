@@ -1,0 +1,301 @@
+{
+  "schema": "robomotion.app/v1",
+  "app_id": "00000000-0000-0000-0000-000000000000",
+  "flow_id": "00000000-0000-0000-0000-000000000000",
+  "name": "Photo Review",
+  "description": "The robot collects and sorts the photos; you look through them, approve the good ones and mark up what needs fixing.",
+  "auth": "workspace",
+  "theme": {
+    "accent": "#FF4F00"
+  },
+  "types": {
+    "PictureMark": {
+      "type": "object",
+      "description": "One place on the photo the person pointed at. Every coordinate is a fraction of the photo, 0 to 1.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "n": {
+          "type": "integer",
+          "description": "Its number on the photo and in the list: 1, 2, 3."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "pin",
+            "box",
+            "arrow",
+            "freehand",
+            "brush"
+          ]
+        },
+        "at": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "A pin: where it points, [x, y]."
+        },
+        "rect": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "A box: [x, y, width, height]."
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "description": "An arrow ([tail, tip]) or a drawn stroke, as [x, y] points."
+        },
+        "width": {
+          "type": "number",
+          "description": "A painted region: the stroke width as a fraction of the photo's width."
+        },
+        "note": {
+          "type": "string",
+          "description": "What the person said about this place."
+        },
+        "tone": {
+          "type": "string",
+          "enum": [
+            "default",
+            "danger"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "n",
+        "kind"
+      ]
+    },
+    "Picture": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string",
+          "description": "What the photo is of, in a few words."
+        },
+        "file": {
+          "$ref": "#/types/FileRef"
+        },
+        "thumb": {
+          "type": "string",
+          "description": "A tiny preview as a data URL, shown blurred until the photo itself arrives."
+        },
+        "previous": {
+          "$ref": "#/types/FileRef"
+        },
+        "category": {
+          "type": "string",
+          "description": "Where the robot filed it."
+        },
+        "confidence": {
+          "type": "number",
+          "description": "How sure the robot is about where it filed it, 0 to 1."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "to_review",
+            "changes_requested",
+            "approved"
+          ]
+        },
+        "taken_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "marks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/types/PictureMark"
+          },
+          "description": "What was asked for last time changes were requested."
+        },
+        "note": {
+          "type": "string",
+          "description": "The sentence that went with those marks."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "file",
+        "status",
+        "taken_at"
+      ]
+    }
+  },
+  "actions": {
+    "listPictures": {
+      "description": "Look up the photos, a page at a time.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "filter": {
+            "type": "string",
+            "description": "Free text to look for in the title or the category."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "all",
+              "to_review",
+              "changes_requested",
+              "approved"
+            ],
+            "description": "Only photos in this state; all when left out."
+          },
+          "sort": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "dir": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ]
+              }
+            }
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Rows to skip."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Rows to return."
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/Picture"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "description": "Rows there are altogether, across every page."
+          }
+        },
+        "required": [
+          "rows",
+          "total"
+        ]
+      },
+      "timeout_ms": 30000
+    },
+    "getPicture": {
+      "description": "Look up one photo.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/Picture"
+      },
+      "timeout_ms": 30000
+    },
+    "requestChanges": {
+      "description": "Send a photo back with the places that need fixing marked on it and a sentence about what to change.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "marks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/PictureMark"
+            }
+          },
+          "annotatedFile": {
+            "$ref": "#/types/FileRef"
+          },
+          "note": {
+            "type": "string",
+            "description": "What should change, in the person's own words."
+          }
+        },
+        "required": [
+          "id",
+          "marks",
+          "annotatedFile",
+          "note"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/Picture"
+      },
+      "timeout_ms": 180000,
+      "concurrency": {
+        "mode": "queue",
+        "limit": 1
+      },
+      "progress": true
+    },
+    "approvePicture": {
+      "description": "Mark a photo as good to use.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/Picture"
+      },
+      "timeout_ms": 30000
+    }
+  },
+  "events": {
+    "pictureReady": {
+      "description": "A photo arrived or came back fixed, and is ready to look at.",
+      "payload": {
+        "$ref": "#/types/Picture"
+      },
+      "audience": "broadcast"
+    }
+  },
+  "screens": {
+    "gallery": {
+      "description": "Every photo, filtered by where it is up to.",
+      "route": "/"
+    },
+    "review": {
+      "description": "One photo: approve it, or mark what needs fixing and say what should change.",
+      "route": "/review"
+    }
+  }
+}

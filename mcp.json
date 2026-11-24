@@ -1,0 +1,94 @@
+{
+  "schema": "robomotion/mcp/v1",
+  "name": "Vacancy Approvals",
+  "description": "Vacancy requests: raised by hiring managers, validated by the People team, approved by the CEO, CPO and CFO, then handed to the Talent Partner.",
+  "instructions": "You help people move vacancy requests through their approval. A hiring manager raises a request (form 1); the local People Business Partner validates it (form 2) or sends it back; the CEO, CPO and CFO each approve, reject or ask for more information; once all three approve, the Talent Partner starts recruiting and closes the request. One rejection rejects the request. Every action needs a signed-in session token; the robot works out the person and role from it and refuses anything that role may not do, and confirm every decision in one line before making it. Never delete anything except a draft the person asks to remove.",
+  "tools": {
+    "getOverview": {
+      "description": "Start here to see what is waiting for a given role.",
+      "read_only": true,
+      "idempotent": true
+    },
+    "loadSampleData": {
+      "read_only": false,
+      "enabled": false
+    },
+    "listRequests": {
+      "description": "List requests for a view such as awaiting_me or to_validate; ask which role the person holds first.",
+      "read_only": true,
+      "idempotent": true
+    },
+    "getRequest": {
+      "description": "Open one request before answering questions about it or deciding on it.",
+      "read_only": true,
+      "idempotent": true
+    },
+    "saveRequest": {
+      "description": "Create or update a request for a hiring manager; ask for the job title, department and location first.",
+      "read_only": false,
+      "idempotent": false
+    },
+    "deleteDraft": {
+      "description": "Remove a draft only when the person asks for it by name.",
+      "read_only": false,
+      "destructive": true
+    },
+    "validateRequest": {
+      "description": "Record the People Business Partner validation; confirm the salary range and recommendation first.",
+      "read_only": false,
+      "destructive": true
+    },
+    "decideRequest": {
+      "description": "Record an executive decision; confirm it in one line before calling.",
+      "read_only": false,
+      "destructive": true
+    },
+    "answerInfo": {
+      "description": "Answer an open question on a request for the person it was asked of.",
+      "read_only": false
+    },
+    "closeRequest": {
+      "description": "Close an approved request once recruiting has started in Deel ATS.",
+      "read_only": false,
+      "destructive": true
+    },
+    "listNotifications": {
+      "description": "Show a role's notifications.",
+      "read_only": true,
+      "idempotent": true
+    },
+    "markNotificationsRead": {
+      "description": "Mark a role's notifications read when they say they have seen them.",
+      "read_only": false,
+      "idempotent": true
+    },
+    "sendReminders": {
+      "description": "Remind executives about requests waiting a week or more.",
+      "read_only": false
+    },
+    "clearAllRequests": {
+      "read_only": false,
+      "destructive": true,
+      "enabled": false
+    },
+    "signIn": {
+      "description": "Sign the person in before anything else; ask for their work email (name@glacierglobal.com) and password.",
+      "read_only": false
+    },
+    "whoAmI": {
+      "description": "Check which account a session belongs to.",
+      "read_only": true,
+      "idempotent": true
+    },
+    "signOut": {
+      "description": "Sign the person out when they ask.",
+      "read_only": false,
+      "idempotent": true
+    }
+  },
+  "assistant": {
+    "enabled": true,
+    "public": false,
+    "greeting": "Hi! I can tell you where a vacancy request stands, what is waiting for you, or help you raise a new one."
+  }
+}

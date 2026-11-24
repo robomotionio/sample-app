@@ -1,0 +1,7 @@
+.robomotion/
+app/node_modules/
+app/vendor/
+app/dist/
+
+# Local database (never committed)
+data/

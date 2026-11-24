@@ -1,0 +1,239 @@
+{
+  "schema": "robomotion.app/v1",
+  "app_id": "00000000-0000-0000-0000-000000000000",
+  "flow_id": "00000000-0000-0000-0000-000000000000",
+  "name": "Dashboard",
+  "description": "Key numbers and recent activity, kept up to date by the robot.",
+  "auth": "workspace",
+  "theme": {
+    "accent": "#FF4F00"
+  },
+  "types": {
+    "Metric": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Shown after the value, for example h or %."
+        },
+        "change_pct": {
+          "type": "number",
+          "description": "Change in percent against the comparison period."
+        },
+        "change_period": {
+          "type": "string",
+          "description": "Plain-language comparison period, for example vs last week."
+        },
+        "up_is_good": {
+          "type": "boolean",
+          "description": "Whether an increase should read as good. Defaults to true.",
+          "default": true
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "value"
+      ]
+    },
+    "Activity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "warn",
+            "error",
+            "pending"
+          ]
+        },
+        "actor": {
+          "type": "string"
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "status",
+        "at"
+      ]
+    },
+    "TrendPoint": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "string",
+          "description": "A point in time: a month (\"2026-04\") or a date (\"2026-04-17\")."
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ]
+    },
+    "TrendSeries": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "What this line is, for the chart's key."
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "$ref": "#/types/TrendPoint"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "points"
+      ]
+    },
+    "DashboardData": {
+      "type": "object",
+      "properties": {
+        "metrics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/types/Metric"
+          }
+        },
+        "activity": {
+          "type": "array",
+          "items": {
+            "$ref": "#/types/Activity"
+          }
+        },
+        "trends": {
+          "type": "array",
+          "items": {
+            "$ref": "#/types/TrendSeries"
+          },
+          "description": "One line per thing being compared, over the chosen period."
+        }
+      },
+      "required": [
+        "metrics",
+        "activity"
+      ]
+    }
+  },
+  "actions": {
+    "refreshDashboard": {
+      "description": "Fetch the latest numbers, the trend lines and recent activity for a period.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date",
+            "description": "First day of the period, ISO YYYY-MM-DD."
+          },
+          "to": {
+            "type": "string",
+            "format": "date",
+            "description": "Last day of the period, ISO YYYY-MM-DD."
+          }
+        }
+      },
+      "result": {
+        "$ref": "#/types/DashboardData"
+      },
+      "timeout_ms": 30000
+    },
+    "listActivity": {
+      "description": "Look up recent activity, newest first, a page at a time.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "filter": {
+            "type": "string",
+            "description": "Free text from the table's filter box."
+          },
+          "sort": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "dir": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ]
+              }
+            }
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Rows to skip."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Rows to return."
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/Activity"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "description": "Rows there are altogether, across every page."
+          }
+        },
+        "required": [
+          "rows",
+          "total"
+        ]
+      },
+      "timeout_ms": 30000
+    }
+  },
+  "events": {
+    "dashboardUpdated": {
+      "description": "The numbers changed and every open screen should refresh.",
+      "payload": {
+        "$ref": "#/types/DashboardData"
+      },
+      "audience": "broadcast"
+    }
+  },
+  "screens": {
+    "overview": {
+      "description": "See the key numbers and what happened recently.",
+      "route": "/"
+    }
+  }
+}

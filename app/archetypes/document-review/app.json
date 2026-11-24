@@ -1,0 +1,228 @@
+{
+  "schema": "robomotion.app/v1",
+  "app_id": "00000000-0000-0000-0000-000000000000",
+  "flow_id": "00000000-0000-0000-0000-000000000000",
+  "name": "Document Review",
+  "description": "Upload documents, let the robot read them, then check and confirm the details.",
+  "auth": "workspace",
+  "theme": {
+    "accent": "#FF4F00"
+  },
+  "types": {
+    "DocumentEvent": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "title": {
+          "type": "string",
+          "description": "What happened, in plain words."
+        },
+        "note": {
+          "type": "string",
+          "description": "A line more, when there is one."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "warn",
+            "error",
+            "pending"
+          ]
+        }
+      },
+      "required": [
+        "at",
+        "title",
+        "status"
+      ]
+    },
+    "DocumentFields": {
+      "type": "object",
+      "properties": {
+        "number": {
+          "type": "string",
+          "description": "The document's own reference number."
+        },
+        "issued_by": {
+          "type": "string"
+        },
+        "issued_on": {
+          "type": "string",
+          "format": "date"
+        },
+        "total": {
+          "type": "number"
+        },
+        "currency": {
+          "type": "string",
+          "description": "ISO 4217 code, for example USD."
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "ReviewedDocument": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "file": {
+          "$ref": "#/types/FileRef"
+        },
+        "fields": {
+          "$ref": "#/types/DocumentFields"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "reading",
+            "needs_review",
+            "confirmed"
+          ]
+        },
+        "uploaded_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "$ref": "#/types/DocumentEvent"
+          },
+          "description": "What has happened to this document so far, oldest first."
+        }
+      },
+      "required": [
+        "id",
+        "file",
+        "fields",
+        "status",
+        "uploaded_at"
+      ]
+    }
+  },
+  "actions": {
+    "extractDocument": {
+      "description": "Read an uploaded document and pull out the key details.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "$ref": "#/types/FileRef"
+          }
+        },
+        "required": [
+          "file"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/ReviewedDocument"
+      },
+      "timeout_ms": 180000,
+      "concurrency": {
+        "mode": "queue",
+        "limit": 1
+      },
+      "progress": true,
+      "cancellable": true
+    },
+    "confirmDocument": {
+      "description": "Save the checked details for a document.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fields": {
+            "$ref": "#/types/DocumentFields"
+          }
+        },
+        "required": [
+          "id",
+          "fields"
+        ]
+      },
+      "result": {
+        "$ref": "#/types/ReviewedDocument"
+      },
+      "timeout_ms": 30000
+    },
+    "listDocuments": {
+      "description": "Look up the documents that have been uploaded, a page at a time.",
+      "params": {
+        "type": "object",
+        "properties": {
+          "filter": {
+            "type": "string",
+            "description": "Free text from the table's filter box."
+          },
+          "sort": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "dir": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ]
+              }
+            }
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Rows to skip."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Rows to return."
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/ReviewedDocument"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "description": "Rows there are altogether, across every page."
+          }
+        },
+        "required": [
+          "rows",
+          "total"
+        ]
+      },
+      "timeout_ms": 30000
+    }
+  },
+  "events": {
+    "documentReady": {
+      "description": "The robot finished reading a document.",
+      "payload": {
+        "$ref": "#/types/ReviewedDocument"
+      },
+      "audience": "broadcast"
+    }
+  },
+  "screens": {
+    "review": {
+      "description": "Upload a document, watch it being read, then check the details.",
+      "route": "/"
+    }
+  }
+}
