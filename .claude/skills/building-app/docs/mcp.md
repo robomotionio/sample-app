@@ -1,0 +1,87 @@
+# `mcp.json` - the app as an MCP server, and the assistant in its corner
+
+Every Robomotion App is also an MCP server. Its `app.json` actions are its tools, served
+by the app's own robot at `https://mcp.robomotion.io/<b58>`, and every app gets a chat
+widget bottom-right that drives those same tools. Neither needs anything from you to
+exist. `mcp.json` is how you make them *good*: it is the presentation layer over the
+contract, the part an agent reads before it touches a tool.
+
+## Shape
+
+```jsonc
+{
+  "schema": "robomotion/mcp/v1",
+  "name": "Leave Desk",
+  "description": "Leave requests for a small team: submit, review, approve.",
+  "instructions": "You help team members and their manager with leave. Members submit and check requests; the manager reviews and decides. Dates are inclusive. Never approve on a member's behalf: only decide when the person asking is the manager.",
+  "tools": {
+    "submit_request": {
+      "description": "Submit a leave request for the person asking. Ask for the dates if they are not given; the reason is optional.",
+      "read_only": false,
+      "idempotent": false
+    },
+    "decide_request": {
+      "description": "Approve or deny one pending request. Confirm the decision in one line before doing it.",
+      "read_only": false,
+      "destructive": true
+    },
+    "list_requests": { "read_only": true },
+    "purge_archive": { "read_only": false, "enabled": false }
+  },
+  "assistant": {
+    "enabled": true,
+    "public": false,
+    "greeting": "Hi! I can submit a leave request, check where one is, or, if you are the manager, decide one."
+  }
+}
+```
+
+## Rules
+
+- **The first line is `"schema": "robomotion/mcp/v1"`.** It names the format; leave it out and
+  the file still loads as v1, write anything else and the whole file is ignored.
+- **Presentation only.** No params, no result schemas, no types. `app.json` owns the contract
+  and typegen; `mcp.json` changes nothing on the wire and nothing in the contract hash.
+  A tool named here that `app.json` does not declare is ignored.
+- **Every action is a tool, both halves of it.** The tool's name is the action's name, its
+  `inputSchema` is the action's `params` and its `outputSchema` is the action's `result`,
+  with `#/types/` references inlined so a client can actually read them. An action is the
+  only way into an app, so this is the whole surface: reads and writes go through the same
+  door. Write `result` properly even when only a screen reads it - a result left vague is a
+  tool an agent has to call to find out what it does, which is not what you want on an
+  action that writes. A result that genuinely has no fixed shape stays open and is simply
+  not advertised.
+- **`instructions` is the soul.** One paragraph: what the app is for, who uses it, the
+  house rules an agent must keep (what needs confirmation, what it must never do). Write
+  it as if briefing a new colleague.
+- **One sentence per tool**, about *when* to use it and what to ask for first. The
+  `app.json` description says what the action does for the UI; this one says how an agent
+  should reach for it.
+- **Every tool says `read_only`, true or false.** `true` means the action only reads and
+  changes nothing; `false` means it changes something. It is required on every tool,
+  including one with `enabled: false`: `robomotion app validate` fails a tool without it, and fails
+  a generated hook that no longer matches it. Run `robomotion app codegen` again after
+  writing or changing it.
+- **Hints are honest.** `read_only` for pure reads, `destructive` for anything that
+  cannot be undone (deleting, sending, paying, deciding), `idempotent` when calling twice
+  is harmless. Clients confirm destructive calls and may retry idempotent ones.
+  `read_only` also reaches the screens: `robomotion app codegen` reads `mcp.json` beside
+  `app.json` and binds the hook of each read-only action as a read, so a list the screen
+  loaded itself asks again after a kit widget writes. Run codegen again after changing
+  it. An action marked `read_only` that changes anything is run again after every write
+  on its screen, so the mark is for pure reads only.
+- **`enabled: false`** keeps an action off both the MCP server and the assistant. Use it
+  for admin or bulk actions a person should click deliberately. `robomotion app smoke`
+  (step 6b) and `robomotion app press` go through this same door, so a tool that is off
+  here is not pressed either - it shows in the smoke report as `not_exposed`, and only a
+  press on its screen proves it (`robomotion app try`, step 7).
+- **`assistant.public`** is off by default. Anonymous visitors of a public app get the
+  assistant only if you turn it on, because every message runs the app's actions and
+  costs the owner model credits.
+- **Never name a real company, person or credential** in any of it. The file ships with
+  the app.
+
+## When to write it
+
+In the same pass as `app.json`, right after it. Update it whenever an action changes
+meaning. It is small; keep it that way.

@@ -54,7 +54,7 @@ WHERE id = '{{{id}}}'`;
 
 const OPEN_REQUEST = `var p = msg.params || {};
 
-msg.db = 'Data Source=C:/Users/İlknur/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
+msg.db = 'Data Source=' + global.get('$Home$') + '/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
 msg.id = String(p.id || '').replace(/[^A-Za-z0-9-]/g, '');
 msg.token = String(p.token || '').replace(/[^A-Za-z0-9]/g, '');
 msg.now = Date.now();

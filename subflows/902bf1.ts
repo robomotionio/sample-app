@@ -64,7 +64,7 @@ subflow.create('Sign in', (f) => {
     .then('beb5ee', 'Core.Programming.Function', 'What Was Typed', {
       func: `var p = msg.params || {};
 
-msg.db = 'Data Source=C:/Users/İlknur/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
+msg.db = 'Data Source=' + global.get('$Home$') + '/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
 msg.now = Date.now();
 msg.username = String(p.username || '').trim().toLowerCase().replace(/[^a-z0-9._@-]/g, '');
 // Sign-in is by work email; a bare name gets the company domain added.
@@ -149,7 +149,7 @@ return [msg, null];`,
     .then('9688b9', 'Core.Programming.Function', 'Which Session', {
       func: `var p = msg.params || {};
 
-msg.db = 'Data Source=C:/Users/İlknur/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
+msg.db = 'Data Source=' + global.get('$Home$') + '/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
 msg.token = String(p.token || '').replace(/[^A-Za-z0-9]/g, '');
 msg.now = Date.now();
 
@@ -185,7 +185,7 @@ return [msg, null];`,
     .then('13af65', 'Core.Programming.Function', 'Which Session Ends', {
       func: `var p = msg.params || {};
 
-msg.db = 'Data Source=C:/Users/İlknur/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
+msg.db = 'Data Source=' + global.get('$Home$') + '/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
 msg.token = String(p.token || '').replace(/[^A-Za-z0-9]/g, '');
 msg.result = { ok: true };
 

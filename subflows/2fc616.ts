@@ -56,7 +56,7 @@ subflow.create('New request', (f) => {
     .then('0abe61', 'Core.Programming.Function', 'Which Request', {
       func: `var p = msg.params || {};
 
-msg.db = 'Data Source=C:/Users/İlknur/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
+msg.db = 'Data Source=' + global.get('$Home$') + '/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
 msg.token = String((msg.params || {}).token || '').replace(/[^A-Za-z0-9]/g, '');
 msg.now = Date.now();
 msg.id = String(p.id || '').replace(/[^A-Za-z0-9-]/g, '');

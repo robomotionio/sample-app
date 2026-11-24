@@ -54,7 +54,7 @@ subflow.create('Home', (f) => {
   // ---- getOverview: the numbers and the "waiting for you" list for one role
   f.node('ea108e', 'Robomotion.Apps.Action', 'Overview Asked', { optActionName: 'getOverview' })
     .then('c214fa', 'Core.Programming.Function', 'Who Is Asking', {
-      func: `msg.db = 'Data Source=C:/Users/İlknur/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
+      func: `msg.db = 'Data Source=' + global.get('$Home$') + '/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
 msg.token = String((msg.params || {}).token || '').replace(/[^A-Za-z0-9]/g, '');
 msg.now = Date.now();
 
@@ -207,7 +207,7 @@ return [msg, null];`,
   // ---- loadSampleData: a few example requests in every stage, for an empty app
   f.node('d32c4a', 'Robomotion.Apps.Action', 'Examples Asked For', { optActionName: 'loadSampleData' })
     .then('2983dc', 'Core.Programming.Function', 'Where The Requests Live', {
-      func: `msg.db = 'Data Source=C:/Users/İlknur/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
+      func: `msg.db = 'Data Source=' + global.get('$Home$') + '/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
 msg.token = String((msg.params || {}).token || '').replace(/[^A-Za-z0-9]/g, '');
 msg.now = Date.now();
 
@@ -441,7 +441,7 @@ return [msg, null];`,
   // ---- clearAllRequests: start a demo from an empty app
   f.node('74e79c', 'Robomotion.Apps.Action', 'Start Over Asked For', { optActionName: 'clearAllRequests' })
     .then('efb872', 'Core.Programming.Function', 'Where The Requests Live', {
-      func: `msg.db = 'Data Source=C:/Users/İlknur/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
+      func: `msg.db = 'Data Source=' + global.get('$Home$') + '/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
 msg.token = String((msg.params || {}).token || '').replace(/[^A-Za-z0-9]/g, '');
 msg.now = Date.now();
 

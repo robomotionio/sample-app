@@ -134,7 +134,7 @@ subflow.create('All requests', (f) => {
     .then('ecb537', 'Core.Programming.Function', 'Who And Which View', {
       func: `var p = msg.params || {};
 
-msg.db = 'Data Source=C:/Users/İlknur/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
+msg.db = 'Data Source=' + global.get('$Home$') + '/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
 msg.token = String((msg.params || {}).token || '').replace(/[^A-Za-z0-9]/g, '');
 msg.now = Date.now();
 msg.scope = String(p.scope || 'all');
@@ -243,7 +243,7 @@ return [msg, null];`,
   // ---- sendReminders: pressed from the screen
   f.node('22b070', 'Robomotion.Apps.Action', 'Reminders Asked For', { optActionName: 'sendReminders' })
     .then('093f43', 'Core.Programming.Function', 'Where The Requests Live', {
-      func: `msg.db = 'Data Source=C:/Users/İlknur/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
+      func: `msg.db = 'Data Source=' + global.get('$Home$') + '/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
 msg.token = String((msg.params || {}).token || '').replace(/[^A-Za-z0-9]/g, '');
 msg.now = Date.now();
 
@@ -331,7 +331,7 @@ return [msg, null];`,
     optRepeat: 21600,
   })
     .then('c8636c', 'Core.Programming.Function', 'Where The Requests Live', {
-      func: `msg.db = 'Data Source=C:/Users/İlknur/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
+      func: `msg.db = 'Data Source=' + global.get('$Home$') + '/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
 
 return msg;`,
     })

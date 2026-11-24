@@ -54,7 +54,7 @@ subflow.create('Notifications', (f) => {
   // ---- listNotifications: what was sent to this role (and this person)
   f.node('406e0b', 'Robomotion.Apps.Action', 'Notifications Asked For', { optActionName: 'listNotifications' })
     .then('8a2737', 'Core.Programming.Function', 'Who Is Asking', {
-      func: `msg.db = 'Data Source=C:/Users/İlknur/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
+      func: `msg.db = 'Data Source=' + global.get('$Home$') + '/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
 msg.token = String((msg.params || {}).token || '').replace(/[^A-Za-z0-9]/g, '');
 msg.now = Date.now();
 msg.token = String((msg.params || {}).token || '').replace(/[^A-Za-z0-9]/g, '');
@@ -118,7 +118,7 @@ return [msg, null];`,
   // ---- markNotificationsRead
   f.node('e76e27', 'Robomotion.Apps.Action', 'Marked As Read', { optActionName: 'markNotificationsRead' })
     .then('045bd8', 'Core.Programming.Function', 'Whose Notifications', {
-      func: `msg.db = 'Data Source=C:/Users/İlknur/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
+      func: `msg.db = 'Data Source=' + global.get('$Home$') + '/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
 msg.token = String((msg.params || {}).token || '').replace(/[^A-Za-z0-9]/g, '');
 msg.now = Date.now();
 msg.token = String((msg.params || {}).token || '').replace(/[^A-Za-z0-9]/g, '');
@@ -184,7 +184,7 @@ return msg;`,
     optRepeat: 20,
   })
     .then('ac5a54', 'Core.Programming.Function', 'Where Things Live', {
-      func: `msg.db = 'Data Source=C:/Users/İlknur/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
+      func: `msg.db = 'Data Source=' + global.get('$Home$') + '/Desktop/Robomotion/Glacier/vacancy-approvals/data/vacancy-approvals.db;Version=3;';
 // Only what happened in the last hour is posted, so an old backlog never floods the channel.
 msg.since = Date.now() - 60 * 60 * 1000;
 

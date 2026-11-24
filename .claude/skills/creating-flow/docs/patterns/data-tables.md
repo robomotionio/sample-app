@@ -1,0 +1,632 @@
+# Data Tables
+
+Universal tabular data format used across all Robomotion data packages: CSV, Excel (local & 365), Google Sheets, Airtable, SQLite, DOM parsing, Pandas, and DataTable operations.
+
+**Related:** `loops.md` (iterating `table.rows`) · `browser.md` (extracting tables from pages with `RunScript`).
+
+## When NOT to use
+
+- **Single-object data** — use `msg.field` directly; don't wrap one row in a `{columns, rows}` structure.
+- **Free-form JSON** — array of heterogeneous objects → stay as an array; don't force a columns list.
+- **Logs and diagnostics** — a `Core.Flow.Log` or `Core.Programming.Debug` node is better than building a table (`console.log` in a Function never reaches `robomotion run`).
+
+## Philosophy
+
+> "The data table is just a simple JSON object"
+
+Unlike heavy object structures used by other RPA tools, Robomotion uses a lightweight, universal JSON format that's easy to manipulate with standard JavaScript.
+
+## Format
+
+Robomotion uses a simple JSON structure for all tabular data:
+
+```javascript
+msg.table = {
+  "columns": ["name", "age", "location"],
+  "rows": [
+    {"name": "John", "age": 54, "location": "Boston"},
+    {"name": "Jane", "age": 47, "location": "London"}
+  ]
+}
+```
+
+- **columns**: JavaScript array of strings (column names)
+- **rows**: Array of JSON objects (each row holds key-value pairs for every column)
+
+## Common mistakes (DO NOT do these)
+
+The shape is exactly two keys: `columns` (string array) and `rows` (array of objects). Any deviation breaks every reader/writer node — `Core.CSV.WriteCSV`, `Core.Excel.SetRange`, `Robomotion.GoogleSheets.SetRange`, `Robomotion.SQLite.Insert`, etc. — and typically surfaces as `ErrFilePath`, empty cells, missing headers, or "table not recognized".
+
+```javascript
+// WRONG: "header" is not a thing. The property is "columns".
+msg.table = { "header": ["name", "age"], "rows": [...] };
+
+// WRONG: rows must be OBJECTS keyed by column name, not positional arrays.
+msg.table = {
+  "columns": ["name", "age"],
+  "rows": [
+    ["John", 54],          // positional array — WRONG
+    ["Jane", 47]
+  ]
+};
+
+// WRONG: row keys don't match column names (writer emits empty cells).
+msg.table = {
+  "columns": ["Name", "Age"],
+  "rows": [{ "name": "John", "age": 54 }]   // lowercase keys vs capitalized columns
+};
+
+// CORRECT
+msg.table = {
+  "columns": ["name", "age"],
+  "rows": [
+    { "name": "John", "age": 54 },
+    { "name": "Jane", "age": 47 }
+  ]
+};
+```
+
+If a flow is failing on a write/insert and you're tempted to "fix" it by renaming `columns` to `header` or by switching rows to arrays — stop. The format above is the only one any data-package node accepts. The bug is somewhere else (file path, credentials, descriptor scope).
+
+### Single Row Format
+
+When working with individual rows (InsertRow, AddRow, ForEach output), a row is a JSON object:
+
+```javascript
+var my_row = {"name": "Tom", "age": 28, "location": "Chicago"};
+
+// NOT an array!
+var wrong_row = ["Tom", 28, "Chicago"];  // WRONG!
+```
+
+### Accessing Data
+
+```javascript
+msg.table.columns      // ["name", "age", "location"]
+msg.table.rows         // Array of row objects
+msg.table.rows[0]      // First row object: {"name": "John", "age": 54, ...}
+msg.table.rows[0].name // "John"
+msg.table.rows.length  // Number of rows
+```
+
+## Column Naming Conventions
+
+When reading from Excel/CSV with `GetRange` or `Read`:
+
+| Option | Column Names |
+|--------|--------------|
+| **Without Headers** | Auto-named as "A", "B", "C", etc. |
+| **With Headers** | Match the file exactly ("Price Range") |
+| **With Headers + Jsonify** | Lowercase, spaces -> underscores ("price_range") |
+
+Example with Jsonify enabled:
+- "First Name" -> "first_name"
+- "Price Range" -> "price_range"
+- "ORDER ID" -> "order_id"
+- "Name" -> "name"
+- "URL" -> "url"
+- "Screenshot Path" -> "screenshot_path"
+
+### CRITICAL: Row Keys Must Match Column Names
+
+When writing with `SetRange`, **row object keys MUST exactly match the column names**:
+
+```javascript
+// CORRECT: Keys match columns exactly
+msg.table = {
+  "columns": ["name", "url", "screenshot_path"],
+  "rows": [
+    { "name": "Petco", "url": "https://petco.com", "screenshot_path": "/tmp/petco.png" }
+  ]
+};
+
+// WRONG: Keys don't match columns (will write empty cells!)
+msg.table = {
+  "columns": ["Name", "URL", "Screenshot Path"],
+  "rows": [
+    { "name": "Petco", "url": "https://petco.com", "screenshot_path": "/tmp/petco.png" }
+    // Keys are lowercase but columns are capitalized - MISMATCH!
+  ]
+};
+```
+
+### Leave Jsonify off when you read a file you know
+
+With `optHeaders: true` and Jsonify off, each row's keys are the header
+exactly as it is in the file, the same names you write and read
+(`row.Date`, `row["Price Range"]`). Jsonify changes every key to lowercase
+with underscores, so `row.Date` is then always empty and a check like "is
+today already in the file?" never matches. Turn it on only when you do not
+know the headers, and then read the keys in that form (`row.date`).
+
+## Always write the header row
+
+A spreadsheet/CSV that a person will open is expected to have a **header row** —
+the column names in row 1, then one data row each. The writer nodes do NOT add it
+unless you turn it on, so a flow that "works" can still produce a headerless file
+that's useless to the user. Always enable the header option when writing:
+
+| Writer | Option to set | Result |
+|--------|---------------|--------|
+| `Core.CSV.WriteCSV` | `optHeaders: true` | first line is the column names |
+| `Core.Excel.SetRange` | `optHeader: true` | first row is the column names |
+| `Robomotion.GoogleSheets.SetRange` / `AppendRange` | `optHeader: true` | header row written |
+
+The header text comes from the `columns` array of the `{columns, rows}` table — so
+name your columns the way the user should see them (e.g. `title`, `price`), and the
+header takes care of itself. Don't hand-prepend a header row into `rows`; that
+double-writes it. (Reading back uses the same flag: `optHeaders: true` on
+`ReadCSV`/`GetRange` so row keys come from the header.)
+
+## Numbers go in as numbers
+
+A value read from a page, an XML or JSON reply, or a CSV is text until you
+convert it, and the writer stores text as text: Excel then shows "number
+stored as text", and sums, sorting and charts on that column do not work.
+Convert in the Function node that builds the row: `rate: Number(m[1])`.
+Keep every digit the source gives: round only when the person asks.
+
+## A date comes back as this computer shows dates
+
+`SetRange` turns a date-looking string (`2026-10-27`) into a real date cell,
+and `GetRange` gives it back the way the computer shows dates (`10/27/2026`
+on one, `27.10.2026` on another), never as you wrote it. A check like "is
+today already in the file?" that compares the two texts never matches, and
+every run adds the day again. Read with `optRawValue: true` instead: a date
+cell then comes back as its day number, the same on every computer:
+
+```javascript
+const t = new Date();
+const today = Math.round((Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - Date.UTC(1899, 11, 30)) / 86400000);
+const already = msg.rows.some((r) => Number(r.Date) === today);
+```
+
+## Operations Using This Format
+
+| Operation | Direction |
+|-----------|-----------|
+| `Core.CSV.ReadCSV` | **Returns** |
+| `Core.CSV.WriteCSV` | **Expects** |
+| `Core.CSV.AppendCSV` | **Expects** |
+| `Core.Excel.GetRange` | **Returns** |
+| `Core.Excel.SetRange` | **Expects** |
+| `Core.Browser.RunScript` | **Returns** JSON string (parse with Function) |
+| `Robomotion.GoogleSheets.GetRange` | **Returns** |
+| `Robomotion.GoogleSheets.SetRange` / `AppendRange` | **Expects** |
+| `Robomotion.Excel365.RangeRead` / `TablesGetRows` | **Returns** |
+| `Robomotion.Excel365.RangeWrite` | **Expects** |
+| `Robomotion.Airtable.GetBaseSchema` | **Returns** tables array |
+| `Robomotion.SQLite.Query` | **Returns** |
+| `Robomotion.SQLite.Insert` | **Expects** |
+| `Robomotion.DOMParser.ExtractTable` | **Returns** |
+| `Robomotion.Pandas.*`, `Robomotion.DataTable.*` | **Uses** |
+
+## Reading Data
+
+### CSV with Headers
+```typescript
+f.node('8b3e72', 'Core.CSV.ReadCSV', 'Read CSV', {
+  inFilePath: Custom('data.csv'),
+  optHeaders: true,
+  outTable: Message('table')
+});
+// msg.table.columns = ["name", "age", "location"]
+// msg.table.rows[0] = {"name": "John", "age": 54, "location": "Boston"}
+```
+
+### Excel Range (Local)
+
+Reading a local `.xlsx` first needs `Core.Excel.Open` to get the file descriptor. **Do NOT set `optCredentials`** — it's optional and only for password-protected files. Passing placeholder vault values (`{ vaultId: '_', itemId: '_' }`) fails validation with *"Property 'optCredentials' requires vault credentials but has empty/placeholder values."* Omit it entirely (see `credentials.md` → "Optional vs required credential properties").
+
+```typescript
+// Open the existing file — no credentials for a normal, unprotected workbook
+f.node('b1c2d3', 'Core.Excel.Open', 'Open Excel', {
+  inPath: Custom('/data/report.xlsx'),
+  outFileDescriptor: Message('excel_fd')
+});
+
+f.node('c5f4a1', 'Core.Excel.GetRange', 'Get Range', {
+  inFileDescriptor: Message('excel_fd'),
+  inFromCell: Custom('A1'),
+  inToCell: Custom('C10'),
+  optHeaders: true,
+  outRange: Message('table')
+});
+// Keys are the headers as written: msg.table.rows[0]["Price Range"]
+```
+
+### Excel 365 (Cloud)
+```typescript
+f.node('d2e8b6', 'Robomotion.Excel365.RangeRead', 'Read Range', {
+  inClientID: Message('client_id'),
+  inWorkbookId: Message('workbook_id'),
+  inSheetName: Custom('Sheet1'),
+  inRange: Custom('A1:C10'),
+  optHeaders: true,
+  outTable: Message('table')
+});
+```
+
+### Google Sheets
+```typescript
+f.node('e9c3d4', 'Robomotion.GoogleSheets.GetRange', 'Get Range', {
+  inClientID: Message('sheets_client'),
+  inSpreadsheetId: Custom('spreadsheet-id'),
+  inRange: Custom('Sheet1!A1:C10'),
+  optHeaders: true,
+  outTable: Message('table')
+});
+```
+
+### DOM Parser (Extract HTML Table)
+```typescript
+f.node('f1a7b2', 'Robomotion.DOMParser.ExtractTable', 'Extract Table', {
+  inHTML: Message('html_content'),
+  inSelector: Custom('table.data'),
+  optHeaders: true,
+  outTable: Message('table')
+});
+// Extracts table from HTML string into { columns, rows } format
+```
+
+## Iterating Over Rows
+
+Use `Core.Programming.ForEach` on `table.rows`:
+
+```typescript
+f.node('1a2b3c', 'Core.CSV.ReadCSV', 'Read CSV', {
+  inFilePath: Custom('products.csv'),
+  optHeaders: true,
+  outTable: Message('products')
+});
+
+// Label before loop
+f.node('4d5e6f', 'Core.Flow.Label', 'Next Product', {});
+f.edge('1a2b3c', 0, '4d5e6f', 0);
+
+f.node('7a8b9c', 'Core.Programming.ForEach', 'For Each', {
+  optInput: Message('products.rows'),  // CRITICAL: .rows
+  optOutput: Message('product')
+});
+f.edge('4d5e6f', 0, '7a8b9c', 0);
+
+// Loop body (port 0) — Log has 0 outputs, connect via edge only
+f.node('d0e1f2', 'Core.Flow.Log', 'Log Name', {
+  inText: Message('product.name')
+});
+f.edge('7a8b9c', 0, 'd0e1f2', 0);
+
+f.node('a3b4c5', 'Core.Flow.Log', 'Log Price', {
+  inText: Message('product.price')
+});
+f.edge('7a8b9c', 0, 'a3b4c5', 0);
+
+f.node('6d7e8f', 'Core.Flow.GoTo', 'Goto', {
+  optNodes: { ids: ['4d5e6f'], type: 'goto', all: false }
+});
+f.edge('7a8b9c', 0, '6d7e8f', 0);
+
+// After loop (port 1)
+f.node('9a0b1c', 'Core.Flow.Stop', 'Done', {});
+f.edge('7a8b9c', 1, '9a0b1c', 0);
+```
+
+**Important**: Iterate over `table.rows`, not `table` directly.
+
+## Manipulating Data
+
+### Add Row
+```typescript
+f.node('2c3d4e', 'Core.Programming.Function', 'Add Row', {
+  func: `
+    msg.table.rows.push({
+      "name": "Tom",
+      "age": 28,
+      "location": "Chicago"
+    });
+    return msg;
+  `
+});
+```
+
+### Filter Rows
+```typescript
+f.node('5f6a7b', 'Core.Programming.Function', 'Filter', {
+  func: `
+    msg.filtered = {
+      columns: msg.table.columns,
+      rows: msg.table.rows.filter(function(row) { return row.age > 30; })
+    };
+    return msg;
+  `
+});
+```
+
+### Map/Transform Rows
+```typescript
+f.node('8c9d0e', 'Core.Programming.Function', 'Transform', {
+  func: `
+    msg.table.rows = msg.table.rows.map(function(row) {
+      row.fullName = row.firstName + " " + row.lastName;
+      return row;
+    });
+    return msg;
+  `
+});
+```
+
+### Sort Rows
+```typescript
+f.node('1f2a3b', 'Core.Programming.Function', 'Sort', {
+  func: `
+    msg.table.rows.sort(function(a, b) { return a.price - b.price; });
+    return msg;
+  `
+});
+```
+
+### Remove Duplicates
+```typescript
+f.node('4c5d6e', 'Core.Programming.Function', 'Remove Duplicates', {
+  func: `
+    var seen = {};
+    msg.table.rows = msg.table.rows.filter(function(row) {
+      if (seen[row.email]) return false;
+      seen[row.email] = true;
+      return true;
+    });
+    return msg;
+  `
+});
+```
+
+## Creating Tables
+
+### Initialize Empty Table
+```typescript
+f.node('7f8a9b', 'Core.Programming.Function', 'Initialize', {
+  func: `
+    msg.results = {
+      columns: ["url", "title", "price"],
+      rows: []
+    };
+    return msg;
+  `
+});
+```
+
+### Build Table in Loop
+
+Initialize a table with `{ columns: [...], rows: [] }`, then use `rows.push({...})` inside a ForEach loop body to accumulate data. See `loops.md` for the ForEach + Label/GoTo wiring pattern.
+
+## Writing Data
+
+**CRITICAL**: All write operations expect the `{ columns, rows }` format or an array of objects with `optHeader: true`.
+
+### Simple Array of Objects (with optHeader)
+
+When writing simple data, you can use an array of objects and enable headers:
+
+```typescript
+// Prepare data as array of objects
+f.node('7e8f9a', 'Core.Programming.Function', 'Prepare Data', {
+  func: `
+msg.data = [
+  { "Name": "John", "Age": 30 },
+  { "Name": "Jane", "Age": 25 }
+];
+return msg;
+  `
+});
+
+// Write with optHeader: true
+f.node('0b1c2d', 'Core.Excel.SetRange', 'Write Data', {
+  inFileDescriptor: { name: 'excel_fd', scope: 'Message' },
+  inStartCell: { name: 'A1', scope: 'Custom' },
+  inTable: { name: 'data', scope: 'Message' },
+  optHeader: true  // IMPORTANT: Writes column headers from object keys
+});
+```
+
+### Write to CSV
+```typescript
+f.node('3e4f5a', 'Core.CSV.WriteCSV', 'Write CSV', {
+  inFilePath: Custom('/output/data.csv'),
+  inTable: Message('table'),
+  optHeaders: true
+});
+```
+
+### Append to CSV (create the file on the first run)
+
+`Core.CSV.AppendCSV` adds rows to the end of a CSV file that **already exists** — it has no
+header option and fails when the file is not there. A flow that adds a row per run (a daily
+log, a price tracker) therefore checks for the file first: the first run creates it with
+`WriteCSV` and a header row, every later run appends.
+
+```typescript
+f.node('4c1e9a', 'Core.Programming.Function', 'Today\'s Row', {
+  func: `msg.csv_path = global.get('$Home$') + '/prices.csv';
+
+msg.table = {
+  columns: ['date', 'price'],
+  rows: [{ date: new Date().toISOString().slice(0, 10), price: msg.price }]
+};
+
+return msg;`
+})
+  .then('a7d352', 'Core.FileSystem.PathExists', 'Is The File There', {
+    inPath: Message('csv_path'),
+    outResult: Message('exists')
+  })
+  .then('e92b06', 'Core.Programming.Function', 'Append Or Create', {
+    outputs: 2,
+    func: `if (msg.exists) {
+  return [msg, null];
+}
+
+return [null, msg];`
+  });
+
+// Port 0: the file is there - append the row (same separator as the file)
+f.node('3f6d81', 'Core.CSV.AppendCSV', 'Append The Row', {
+  inFilePath: Message('csv_path'),
+  inTable: Message('table')
+});
+// Port 1: first run - create it, header row first
+f.node('b50c2e', 'Core.CSV.WriteCSV', 'Create The File', {
+  inFilePath: Message('csv_path'),
+  inTable: Message('table'),
+  optHeaders: true
+});
+f.node('61af94', 'Core.Flow.Stop', 'Stop', {});
+
+f.edge('e92b06', 0, '3f6d81', 0);
+f.edge('e92b06', 1, 'b50c2e', 0);
+f.edge('3f6d81', 0, '61af94', 0);
+f.edge('b50c2e', 0, '61af94', 0);
+```
+
+Keep the `columns` the same on both paths: `WriteCSV` writes them as the header, and
+`AppendCSV` writes the row values in that column order.
+
+### Write to Excel
+```typescript
+f.node('6b7c8d', 'Core.Excel.Create', 'Create Excel', {
+  inPath: Custom('/output/report.xlsx'),
+  outFileDescriptor: Message('excel_fd'),
+  optOverwrite: true
+})
+  .then('9e0f1a', 'Core.Excel.SetRange', 'Set Range', {
+    inFileDescriptor: Message('excel_fd'),
+    inStartCell: Custom('A1'),
+    inTable: Message('table')
+  })
+  .then('2b3c4d', 'Core.Excel.Save', 'Save', {
+    inFileDescriptor: Message('excel_fd')
+  })
+  .then('5e6f7a', 'Core.Excel.Close', 'Close', {
+    inFileDescriptor: Message('excel_fd')
+  });
+```
+
+Call Save before Close. Close does not save: every change since the last Save
+is lost, and the run still succeeds.
+
+### Insert into SQLite
+
+`inTable` is the **data** (`{columns, rows}`); the table's name in the database is
+`inDatabaseTable`. The values are passed as they are — no quoting to do, an apostrophe in
+a name is safe — so this is the way to write text a person typed.
+
+A SQLite node reaches the database one of two ways (`robomotion describe node Robomotion.SQLite.Insert`):
+
+- **`optConnectionString`** on the node itself — `Custom('Data Source=/path/to/app.db;Version=3;')`
+  or a `Message()` holding that string. Simplest; each node opens the file on its own.
+- **`inConnectionId`** — the id a `Robomotion.SQLite.Connect` node put in `msg.conn_id`
+  (Connect takes the same `optConnectionString`). Use it for several statements on one
+  connection, or with a transaction (`Start` / `Commit`, `inTransactionId`).
+
+```typescript
+// With a connection string (no Connect node)
+f.node('8b9c0d', 'Robomotion.SQLite.Insert', 'Insert', {
+  optConnectionString: Message('db'),   // 'Data Source=' + path + ';Version=3;'
+  inDatabaseTable: Custom('products'),
+  inTable: Message('table')
+});
+
+// With a connection opened earlier
+f.node('2a7f40', 'Robomotion.SQLite.Connect', 'Open The Database', {
+  optConnectionString: Message('db'),
+  outConnectionId: Message('conn_id')
+})
+  .then('c63e1b', 'Robomotion.SQLite.Insert', 'Insert', {
+    inConnectionId: Message('conn_id'),
+    inDatabaseTable: Custom('products'),
+    inTable: Message('table')
+  });
+```
+
+Build the path with a literal `'/'` in a Function (`msg.db = 'Data Source=' + global.get('$Home$') + '/app.db;Version=3;'`) — system variables are not read inside `Custom()`.
+
+Reading back is `Robomotion.SQLite.Query` with the SQL in its `func` and `{{{field}}}`
+placeholders. Write text values as `'{{{field}}}'`, quotes hugging the placeholder: the node
+doubles an apostrophe there itself (1.6.6), so never double it by hand, and a `LIKE` takes the
+whole pattern built in a Function (`LIKE '{{{pattern}}}'`, never `LIKE '%{{{q}}}%'`, which is
+not quoted). The full rule: `../reference/function-nodes.md`.
+
+### Write to Excel 365 (Cloud)
+```typescript
+f.node('1e2f3a', 'Robomotion.Excel365.RangeWrite', 'Write Range', {
+  inClientID: Message('client_id'),
+  inWorkbookId: Message('workbook_id'),
+  inSheetName: Custom('Sheet1'),
+  inRange: Custom('A1'),
+  inTable: Message('table'),
+  optHeader: true
+});
+```
+
+### Write to Google Sheets
+```typescript
+// SetRange - overwrites existing data
+f.node('4b5c6d', 'Robomotion.GoogleSheets.SetRange', 'Set Range', {
+  inClientID: Message('sheets_client'),
+  inSpreadsheetId: Custom('spreadsheet-id'),
+  inRange: Custom('Sheet1!A1'),
+  inTable: Message('table')
+});
+
+// AppendRange - adds rows to end of existing data
+f.node('7e8f9b', 'Robomotion.GoogleSheets.AppendRange', 'Append', {
+  inClientID: Message('sheets_client'),
+  inSpreadsheetId: Custom('spreadsheet-id'),
+  inRange: Custom('Sheet1!A1'),
+  inTable: Message('table')
+});
+```
+
+## API Response to Table
+
+```typescript
+f.node('0a1b2c', 'Core.Net.HttpRequest', 'HTTP Request', {
+  optUrl: Custom('https://api.example.com/users'),
+  optMethod: 'get',
+  outBody: Message('response')
+})
+  .then('3d4e5f', 'Core.Programming.Function', 'Transform', {
+    func: `
+      msg.users = {
+        columns: ["id", "name", "email"],
+        rows: msg.response.data.map(function(user) {
+          return { id: user.id, name: user.name, email: user.email };
+        })
+      };
+      return msg;
+    `
+  });
+```
+
+## Quick Reference
+
+| Operation | Method |
+|-----------|--------|
+| Read CSV | `Core.CSV.ReadCSV` |
+| Write CSV | `Core.CSV.WriteCSV` |
+| Append to CSV (file must exist) | `Core.CSV.AppendCSV` |
+| Read local Excel | `Core.Excel.GetRange` |
+| Write local Excel | `Core.Excel.SetRange` |
+| Read Excel 365 | `Robomotion.Excel365.RangeRead` |
+| Write Excel 365 | `Robomotion.Excel365.RangeWrite` |
+| Read Google Sheets | `Robomotion.GoogleSheets.GetRange` |
+| Write Google Sheets | `Robomotion.GoogleSheets.SetRange`, `AppendRange` |
+| Extract HTML table | `Robomotion.DOMParser.ExtractTable` |
+| SQLite query | `Robomotion.SQLite.Query` |
+| SQLite insert | `Robomotion.SQLite.Insert` (`inDatabaseTable` + `inTable`) |
+| Iterate rows | `ForEach` on `table.rows` |
+| Add row | `rows.push(rowObj)` in Function |
+| Filter rows | `rows.filter()` in Function |
+| Transform rows | `rows.map()` in Function |
+| Sort rows | `rows.sort()` in Function |
+| Row count | `table.rows.length` |
+| Access field | `row.fieldName` |

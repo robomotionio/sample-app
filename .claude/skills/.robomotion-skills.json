@@ -1,0 +1,22 @@
+{
+  "repo": "robomotionio/agent-skills",
+  "ref": "main",
+  "commit": "10e189d5e8450a64d5a1c1c50a20cd84b4036251",
+  "skills": [
+    "building-app",
+    "creating-flow",
+    "creating-form",
+    "document-understanding",
+    "exploring-browser",
+    "exploring-image",
+    "exploring-java",
+    "exploring-windows",
+    "reversing-network",
+    "running-chat-assistant",
+    "running-flow",
+    "searching-packages",
+    "testing-flow",
+    "validating-flow"
+  ],
+  "installed_at": "2026-11-24T18:00:52.010Z"
+}
